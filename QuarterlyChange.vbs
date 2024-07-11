@@ -9,6 +9,8 @@ Sub CalculateQuarterlyChanges()
     Dim percentChange As Double
     Dim resultRow As Long
     Dim i As Long
+    Dim maxIncrease As Double, maxDecrease As Double, maxVolume As Double
+    Dim maxIncreaseTicker As String, maxDecreaseTicker As String, maxVolumeTicker As String
 
     ' Set the current worksheet
     Set ws = ActiveSheet
@@ -25,6 +27,11 @@ Sub CalculateQuarterlyChanges()
     End With
     resultRow = 2
 
+    ' Initialize variables for max values
+    maxIncrease = -99999
+    maxDecrease = 99999
+    maxVolume = 0
+
     ' Loop through each ticker symbol
     For i = 2 To lastRow
         If ws.Cells(i, 1).Value <> ws.Cells(i - 1, 1).Value Or i = lastRow Then
@@ -35,7 +42,7 @@ Sub CalculateQuarterlyChanges()
                     closePrice = ws.Cells(i - 1, 6).Value
                 End If
                 quarterlyChange = closePrice - openPrice
-                percentChange = (quarterlyChange / openPrice) * 100
+                percentChange = (quarterlyChange / openPrice)
 
                 ws.Cells(resultRow, 9).Value = ticker
                 ws.Cells(resultRow, 10).Value = quarterlyChange
@@ -46,6 +53,21 @@ Sub CalculateQuarterlyChanges()
                     ws.Cells(resultRow, 10).Interior.Color = RGB(0, 255, 0)
                 ElseIf quarterlyChange < 0 Then
                     ws.Cells(resultRow, 10).Interior.Color = RGB(255, 0, 0)
+                End If
+
+                If percentChange > maxIncrease Then
+                    maxIncrease = percentChange
+                    maxIncreaseTicker = ticker
+                End If
+
+                If percentChange < maxDecrease Then
+                    maxDecrease = percentChange
+                    maxDecreaseTicker = ticker
+                End If
+
+                If totalVolume > maxVolume Then
+                    maxVolume = totalVolume
+                    maxVolumeTicker = ticker
                 End If
 
                 resultRow = resultRow + 1
@@ -64,4 +86,23 @@ Sub CalculateQuarterlyChanges()
     With ws
         .Columns("I:L").AutoFit
     End With
+
+    ' Add summary results for max values
+    With ws
+        .Cells(1, 15).Value = "Greatest % Increase"
+        .Cells(1, 16).Value = maxIncreaseTicker
+        .Cells(1, 17).Value = Format(maxIncrease, "0.00%")
+
+        .Cells(2, 15).Value = "Greatest % Decrease"
+        .Cells(2, 16).Value = maxDecreaseTicker
+        .Cells(2, 17).Value = Format(maxDecrease, "0.00%")
+
+        .Cells(3, 15).Value = "Greatest Total Volume"
+        .Cells(3, 16).Value = maxVolumeTicker
+        .Cells(3, 17).Value = Format(maxVolume, "#,##0")
+    End With
+
+    ' Format the summary columns
+    ws.Columns("O:Q").AutoFit
 End Sub
+
